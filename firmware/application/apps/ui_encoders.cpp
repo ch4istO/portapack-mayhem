@@ -135,8 +135,7 @@ void EncodersConfigView::draw_waveform() {
 	waveform.set_dirty();
 }
 
-void EncodersConfigView::generate_frame(bool is_debruijn, uint32_t debruijn_bits)
-{
+void EncodersConfigView::generate_frame(bool is_debruijn, uint32_t debruijn_bits) {
 	uint8_t i = 0;
 	frame_fragments.clear();
 
@@ -169,78 +168,71 @@ void EncodersConfigView::generate_frame(bool is_debruijn, uint32_t debruijn_bits
 					abit = 0;
 
 				pos--;
-				//symfield_word.set_sym(i++,abit);
-				symfield_word.set_sym(i,abit);
-				frame_fragments += encoder_def->bit_format[symfield_word.get_sym(i++)]; 
-				//i++; //Even while grabbing this address bit from debruijn, must move forward on the symfield, in case there is a 'D' further ahead
-				//frame_fragments += encoder_def->bit_format[abit];
-			}
-			
+				//symfield_word.set_sym(i,abit);
+				//frame_fragments += encoder_def->bit_format[symfield_word.get_sym(i++)]; 
+				i++; //Even while grabbing this address bit from debruijn, must move forward on the symfield, in case there is a 'D' further ahead
+				frame_fragments += encoder_def->bit_format[abit];
+			}			
 		}
 	}
+
 	draw_waveform();
 }
 
-	// uint8_t EncodersConfigView::repeat_min()
-	// {
-	// 	return encoder_def->repeat_min;
-	// }
+uint32_t EncodersConfigView::samples_per_bit() {
+	return OOK_SAMPLERATE / ((field_clk.value() * 1000) / encoder_def->clk_per_fragment);
+}
 
-	uint32_t EncodersConfigView::samples_per_bit()
-	{
-		return OOK_SAMPLERATE / ((field_clk.value() * 1000) / encoder_def->clk_per_fragment);
-	}
+uint32_t EncodersConfigView::pause_symbols() {
+	return encoder_def->pause_symbols;
+}
 
-	uint32_t EncodersConfigView::pause_symbols()
-	{
-		return encoder_def->pause_symbols;
-	}
+EncodersScanView::EncodersScanView(
+	NavigationView&, Rect parent_rect
+) {
+	set_parent_rect(parent_rect);
+	hidden(true);
+	
+	add_children({
+		&labels,
+		&text_debug_encoder,
+		&text_debug_word_format,
+		&text_debug_abits,
+		&text_debug_afsk_repeats,
+		&text_debug_de_bruijn_bits,
+		&text_debug
+	});
+}
 
-	EncodersScanView::EncodersScanView(
-		NavigationView &, Rect parent_rect)
-	{
-		set_parent_rect(parent_rect);
-		hidden(true);
+void EncodersView::focus() {
+	tab_view.focus();
+}
 
-		add_children({
-			&labels,
-			&text_debug_encoder,
-			&text_debug_word_format,
-			&text_debug_abits,
-			&text_debug_afsk_repeats,
-			&text_debug_de_bruijn_bits,
-			&text_debug
-		});
-	}
+EncodersView::~EncodersView() {
+	transmitter_model.disable();
+	baseband::shutdown();
+}
 
-	void EncodersView::focus()
-	{
-		tab_view.focus();
-	}
+void EncodersView::update_progress() {
+	text_status.set("            "); //euquiq: it was commented
 
-	EncodersView::~EncodersView()
-	{
-		transmitter_model.disable();
-		baseband::shutdown();
-	}
-
-	void EncodersView::update_progress()
-	{
-		text_status.set("            "); //euquiq: it was commented
-
-		if (tx_mode == SINGLE)
-		{
-			std::string str_buffer = to_string_dec_uint(repeat_index) + "/" + to_string_dec_uint(afsk_repeats);
-			text_status.set(str_buffer);
+	if (tx_mode == SINGLE) {
+			//std::string str_buffer = to_string_dec_uint(repeat_index) + "/" + to_string_dec_uint(afsk_repeats);
+			text_status.set(to_string_dec_uint(repeat_index) + "/" + to_string_dec_uint(afsk_repeats));
 			progressbar.set_value(repeat_index);
 		}
 		else if (tx_mode == SCAN)
 		{
-			std::string str_buffer = to_string_dec_uint(repeat_index) + "/" +
+			//std::string str_buffer = to_string_dec_uint(repeat_index) + "/" +
 									 to_string_dec_uint(afsk_repeats) + " " +
 									 to_string_dec_uint(scan_index + 1) + "/" +
 									 to_string_dec_uint(scan_count);
-			text_status.set(str_buffer);
+			text_status.set(
+				to_string_dec_uint(repeat_index) + "/" +
+				to_string_dec_uint(afsk_repeats) + " " +
+				to_string_dec_uint(scan_index + 1) + "/" +
+				to_string_dec_uint(scan_count)
+			);
 			progressbar.set_value(scan_progress);
 		}
 		else
