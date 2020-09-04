@@ -194,17 +194,6 @@ private:
 	void start_tx(const bool scan);
 	void on_tx_progress(const uint32_t progress, const bool done);
 	
-	const Style style_val {
-		.font = font::fixed_8x16,
-		.background = Color::green(),
-		.foreground = Color::black(),
-	};
-	const Style style_cancel {
-		.font = font::fixed_8x16,
-		.background = Color::red(),
-		.foreground = Color::black(),
-	};
-	
 	Rect view_rect = { 0, 4 * 8, 240, 154 };
 	
 	EncodersConfigView view_config { nav_, view_rect };

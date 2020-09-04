@@ -217,16 +217,11 @@ void EncodersView::update_progress() {
 	text_status.set("            "); //euquiq: it was commented
 
 	if (tx_mode == SINGLE) {
-			//std::string str_buffer = to_string_dec_uint(repeat_index) + "/" + to_string_dec_uint(afsk_repeats);
 			text_status.set(to_string_dec_uint(repeat_index) + "/" + to_string_dec_uint(afsk_repeats));
 			progressbar.set_value(repeat_index);
 		}
 		else if (tx_mode == SCAN)
 		{
-			//std::string str_buffer = to_string_dec_uint(repeat_index) + "/" +
-									 to_string_dec_uint(afsk_repeats) + " " +
-									 to_string_dec_uint(scan_index + 1) + "/" +
-									 to_string_dec_uint(scan_count);
 			text_status.set(
 				to_string_dec_uint(repeat_index) + "/" +
 				to_string_dec_uint(afsk_repeats) + " " +
@@ -244,10 +239,8 @@ void EncodersView::update_progress() {
 
 	void EncodersView::on_tx_progress(const uint32_t progress, const bool done)
 	{
-
 		if (!done)
-		{
-			// Repeating...
+		{ // Repeating...
 			repeat_index = progress + 1;
 
 			if (tx_mode == SCAN)
@@ -272,7 +265,6 @@ void EncodersView::update_progress() {
 					progressbar.set_value(0);
 					tx_mode = IDLE;
 					abort_scan = false;
-					button_scan.set_style(&style_val);
 					button_scan.set_text("SCAN");
 				}
 				else
@@ -308,14 +300,9 @@ void EncodersView::update_progress() {
 		if (scan)
 		{
 			if (tx_mode != SCAN)
-			{ //Scanning, and this is first time
-				scan_index = 0;
-
-				//First, need to determine the A (Addresses) bit quantity
-						//uint8_t word_length;					// Total # of symbols (not counting sync)
-						//char word_format[32];					// A for Address, D for Data, S for sync
-
-				view_config.bits_per_packet = 0;
+			{ 
+				scan_index = 0; //Scanning, and this is first time
+				view_config.bits_per_packet = 0; //Determine the A (Addresses) bit quantity
 				for (uint8_t c=0; c < view_config.encoder_def->word_length; c++)
 					if (view_config.encoder_def->word_format[c] == 'A') //Address bit found
 						view_config.bits_per_packet++;
@@ -325,7 +312,7 @@ void EncodersView::update_progress() {
 
 				scan_progress = 1;
 				repeat_index = 1;
-				afsk_repeats = view_config.encoder_def->repeat_min; //Store the min afsk repeats for this scan in a safe place
+				afsk_repeats = 1; // on scanning send just one time each code //view_config.encoder_def->repeat_min;
 				tx_mode = SCAN;
 				progressbar.set_max(scan_count * afsk_repeats); 
 
