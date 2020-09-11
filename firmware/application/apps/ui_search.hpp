@@ -35,8 +35,8 @@ namespace ui {
 #define SEARCH_BIN_NB_NO_DC	(SEARCH_BIN_NB - 16)	// Bins after trimming
 #define SEARCH_BIN_WIDTH		(SEARCH_SLICE_WIDTH / SEARCH_BIN_NB)
 
-#define DETECT_DELAY		5	// In 100ms units
-#define RELEASE_DELAY		6
+#define DETECT_DELAY		5	// euquiq: Original value: 5  / In 100ms units
+#define RELEASE_DELAY		6	// euquiq: Original value: 6  
 
 struct SearchRecentEntry {
 	using Key = rf::Frequency;

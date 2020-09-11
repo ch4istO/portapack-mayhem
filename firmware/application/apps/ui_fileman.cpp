@@ -29,41 +29,49 @@ using namespace portapack;
 
 namespace ui {
 
-void FileManBaseView::load_directory_contents(const std::filesystem::path& dir_path) {
-	current_path = dir_path;
-	
-	text_current.set(dir_path.string().length()? dir_path.string().substr(0, 30 - 6):"(sd root)");
+	void FileManBaseView::load_directory_contents(const std::filesystem::path &dir_path)
+	{
+		current_path = dir_path;
 
-	entry_list.clear();
-	
-	auto filtering = (bool)extension_filter.size();
-	
-	// List directories and files, put directories up top
-	if (dir_path.string().length())
-		entry_list.push_back({ u"..", 0, true });
-	
-	for (const auto& entry : std::filesystem::directory_iterator(dir_path, u"*")) {
-		if (std::filesystem::is_regular_file(entry.status())) {
-			if (entry.path().string().length()) {
-				bool matched = true;
-				if (filtering) {
-					auto entry_extension = entry.path().extension().string();
-				
-					for (auto &c: entry_extension)
-						c = toupper(c);
-					
-					if (entry_extension != extension_filter)
-						matched = false;
+		text_current.set(dir_path.string().length() ? dir_path.string().substr(0, 30 - 6) : "(sd root)");
+
+		entry_list.clear();
+
+		auto filtering = (bool)extension_filter.size();
+
+		// List directories and files, put directories up top
+		if (dir_path.string().length())
+			entry_list.push_back({u"..", 0, true});
+
+		for (const auto &entry : std::filesystem::directory_iterator(dir_path, u"*"))
+		{
+			// do not display dir / files starting with '.' (hidden / tmp)
+			if (entry.path().string().length() && entry.path().filename().string()[0] != '.')
+			{
+				if (std::filesystem::is_regular_file(entry.status()))
+				{
+					bool matched = true;
+					if (filtering)
+					{
+						auto entry_extension = entry.path().extension().string();
+
+						for (auto &c : entry_extension)
+							c = toupper(c);
+
+						if (entry_extension != extension_filter)
+							matched = false;
+					}
+
+					if (matched)
+						entry_list.push_back({entry.path(), (uint32_t)entry.size(), false});
 				}
-				
-				if (matched)
-					entry_list.push_back({ entry.path(), (uint32_t)entry.size(), false });
+				else if (std::filesystem::is_directory(entry.status()))
+				{
+					entry_list.insert(entry_list.begin(), {entry.path(), 0, true});
+				}
 			}
-		} else if (std::filesystem::is_directory(entry.status())) {
-			entry_list.insert(entry_list.begin(), { entry.path(), 0, true });
 		}
 	}
-}
 
 std::filesystem::path FileManBaseView::get_selected_path() {
 	auto selected_path_str = current_path.string();

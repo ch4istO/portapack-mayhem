@@ -142,16 +142,12 @@ void SondeView::on_packet(const sonde::Packet &packet)
 		if (temp_humid_info.humid != 0)
 		{
 			double decimals = abs(get_decimals(temp_humid_info.humid, 10, true));
-			//if (decimals < 0)
-			//	decimals = -decimals;
 			text_humid.set(to_string_dec_int((int)temp_humid_info.humid) + "." + to_string_dec_uint(decimals, 1) + "%");
 		}
 
 		if (temp_humid_info.temp != 0)
 		{
 			double decimals = abs(get_decimals(temp_humid_info.temp, 10, true));
-			// if (decimals < 0)
-			// 	decimals = -decimals;
 			text_temp.set(to_string_dec_int((int)temp_humid_info.temp) + "." + to_string_dec_uint(decimals, 1) + "C");
 		}
 
