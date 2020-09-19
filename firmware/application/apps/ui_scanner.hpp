@@ -126,6 +126,7 @@ private:
 	void scan_pause();
 	void scan_resume();
 	void user_resume();
+	void frequency_file_load(std::string file_name, bool stop_all_before = false);
 
 	void on_statistics_update(const ChannelStatistics& statistics);
 	void on_headphone_volume_changed(int32_t v);
@@ -137,6 +138,7 @@ private:
 	uint32_t wait { 0 };
 	size_t	def_step { 0 };
 	freqman_db database { };
+	std::string loaded_file_name;
 	uint32_t current_index { 0 };
 	bool userpause { false };
 	
@@ -177,7 +179,7 @@ private:
 	NumberField field_squelch {
 		{ 15 * 8, 1 * 16 },
 		3,
-		{ -90, 20 },
+ 		{ -90, 20 },
 		1,
 		' ',
 	};
@@ -273,9 +275,14 @@ private:
 		"MIC TX"
 	};
 
-		Button button_add {
+	Button button_add {
 		{ 168, (15 * 16) - 4, 72, 28 },
 		"ADD FQ"
+	};
+
+	Button button_load {
+		{ 24 * 8, 3 * 16 - 8, 6 * 8, 22 },
+		"Load"
 	};
 
 	Button button_remove {
