@@ -41,7 +41,7 @@ void SigGenProcessor::execute(const buffer_c8_t& buffer) {
 		
 		if (tone_shape == 0) {
 			// CW
-			re = 127;
+			re = 127; //euquiq was 0
 			im = 0;
 		} else {
 			
