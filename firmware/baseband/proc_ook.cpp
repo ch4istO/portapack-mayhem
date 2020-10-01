@@ -81,11 +81,29 @@ void OOKProcessor::execute(const buffer_c8_t& buffer) {
 		}
 		
 		if (cur_bit) {
-			phase = (phase + 200);			// What ?
+/*
+		 	// let's say target carrier freq is fc,
+			// OOK_SAMPLERATE / fc = prescaler
+			// so we have to loop over the sin table in n='prescaler' steps
+			// sin table size is 256
+			// 256 / prescaler = sin_carrier_step
+			phase += 6; //OOK_DEFAULT_STEP
+
+			// 90° phase shift between I and Q here:
+			// phase + 0 = 0°, phase + 64 = +PI/2, and so on.
+			// maybe this would be a nice parameter to add to the OOKConfigure message...
+			sphase = phase + 64;
+
+			re = (sine_table_i8[sphase & 0xFF]);
+			im = (sine_table_i8[phase & 0xFF]); 
+*/
+ 			phase = (phase + 200);			// What ?	 
 			sphase = phase + (64 << 18);
 
 			re = (sine_table_i8[(sphase & 0x03FC0000) >> 18]);
 			im = (sine_table_i8[(phase & 0x03FC0000) >> 18]);
+
+			
 		} else {
 			re = 0;
 			im = 0;

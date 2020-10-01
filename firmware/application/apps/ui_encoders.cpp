@@ -90,7 +90,7 @@ void EncodersView::generate_frame(bool is_debruijn, uint32_t debruijn_bits) {
 				frame_fragments += encoder_def->bit_format[symfield_word.get_sym(i++)]; //Get the address from user's configured symfield
 			else 			
 			{	//De BRuijn!
-				if ( debruijn_bits & (1 << (31 - pos)) )
+				if ( debruijn_bits & (1 << pos) ) //if ( debruijn_bits & (1 << (31 - pos)) )
 				 	frame_fragments += encoder_def->bit_format[1];
 				else
 					frame_fragments += encoder_def->bit_format[0];
@@ -229,8 +229,6 @@ void EncodersView::update_progress() {
 				progressbar.set_max(scan_count * afsk_repeats); 
 
 			}
-			//euquiq: maybe here goes an else, and get the debruijn bits above for the first time and do a debruijn_bits>>=1 to clear the last bit which apparently the debruijn function is placing
-			//in extra, the first time it is called. On the else, again just issue the same command as below, loading the debruikn_bits normally.
 
 			debruijn_bits = debruijn_seq.compute(bits_per_packet); //bits sequence for this step
 			update_progress();
@@ -269,11 +267,7 @@ void EncodersView::update_progress() {
 		std::vector<option_t> enc_options;
 		size_t i;
 		
-		//set_parent_rect(parent_rect);
-		//hidden(true);
-		
-		// Default encoder def
-		encoder_def = &encoder_defs[0];
+		encoder_def = &encoder_defs[0]; // Default encoder def
 
 		add_children({	
 						&labels,
@@ -289,8 +283,7 @@ void EncodersView::update_progress() {
 						&tx_view
 					});
 
-		// Load encoder types in option field
-		for (i = 0; i < ENC_TYPES_COUNT; i++)
+		for (i = 0; i < ENC_TYPES_COUNT; i++) // Load encoder types in option field
 			enc_options.emplace_back(std::make_pair(encoder_defs[i].name, i));
 		
 		options_enctype.on_change = [this](size_t index, int32_t) {

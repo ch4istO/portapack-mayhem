@@ -102,7 +102,7 @@ private:
 
 	OptionsField options_enctype {		// Options are loaded at runtime
 		{ 6 * 8, 1 * 8 },
-		7,
+		9,
 		{
 		}
 	};
