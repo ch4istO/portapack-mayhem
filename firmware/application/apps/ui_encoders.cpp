@@ -24,6 +24,7 @@
 
 #include "baseband_api.hpp"
 #include "string_format.hpp"
+#include "file.hpp"
 
 using namespace portapack;
 
@@ -137,7 +138,7 @@ void EncodersView::update_progress() {
 			text_status.set(
 				to_string_dec_uint(repeat_index) + "/" +
 				to_string_dec_uint(afsk_repeats) + " " +
-				to_string_dec_uint(scan_index + 1) + "/" +
+				to_string_dec_uint(scan_progress) + "/" +
 				to_string_dec_uint(scan_count)
 			);
 			progressbar.set_value(scan_progress);
@@ -167,7 +168,7 @@ void EncodersView::update_progress() {
 		}
 		else
 		{	// Done transmitting
-			if ((tx_mode == SCAN) && (scan_index < (scan_count - 1)))
+			if ((tx_mode == SCAN) && (scan_progress < scan_count))
 			{
 				transmitter_model.disable();
 				if (abort_scan)
@@ -182,7 +183,7 @@ void EncodersView::update_progress() {
 				else
 				{
 					// Next address
-					scan_index++;
+					scan_index += bits_per_packet; //Bit index on the debruijn sequence
 					scan_progress++;
 					repeat_index = 1;
 					update_progress();
@@ -213,7 +214,7 @@ void EncodersView::update_progress() {
 		{
 			if (tx_mode != SCAN)
 			{ 
-				scan_index = 0; //Scanning, and this is first time
+				scan_index = 0; //Scanning, number of bits in debruijn sequence
 				bits_per_packet = 0; //Determine the A (Addresses) bit quantity
 				for (uint8_t c=0; c < encoder_def->word_length; c++)
 					if (encoder_def->word_format[c] == 'A') //Address bit found
@@ -227,10 +228,34 @@ void EncodersView::update_progress() {
 				afsk_repeats = 1; // on scanning send just one time each code //encoder_def->repeat_min;
 				tx_mode = SCAN;
 				progressbar.set_max(scan_count * afsk_repeats); 
+			}
+			debruijn_seq.init(bits_per_packet);
+			debruijn_bits = debruijn_seq.compute(scan_index); //bits sequence for this step
 
+			//Save this debruijn bits on a logfile
+ 			File log_file;
+			std::string file_path = "DEBRUIJN.TXT";
+			auto result = log_file.append(file_path); 
+			if (!result.is_valid()) {
+
+				//log_file.write_line(to_string_bin(debruijn_bits,32)); 	//First present the raw 32 bits coming back from debruijn algo.
+
+ 				int16_t pos = bits_per_packet; //Only need the De Bruijn populated positions inside bits_per_packet (0 based!);
+				std::string debruijn_txt;
+				debruijn_txt.reserve(pos);
+				do {
+					
+					if ( debruijn_bits & (1 << (pos)) )
+						debruijn_txt += "1";
+					else
+						debruijn_txt += "0";
+				
+				pos--;
+				} while (pos > 0);
+
+				log_file.write_line(debruijn_txt);		//Log the actual bits which will be used. 
 			}
 
-			debruijn_bits = debruijn_seq.compute(bits_per_packet); //bits sequence for this step
 			update_progress();
 			generate_frame(true, debruijn_bits);
 		}
@@ -283,7 +308,8 @@ void EncodersView::update_progress() {
 						&tx_view
 					});
 
-		for (i = 0; i < ENC_TYPES_COUNT; i++) // Load encoder types in option field
+		// Load encoder types in option field
+		for (i = 0; i < ENC_TYPES_COUNT; i++)
 			enc_options.emplace_back(std::make_pair(encoder_defs[i].name, i));
 		
 		options_enctype.on_change = [this](size_t index, int32_t) {
@@ -338,6 +364,10 @@ void EncodersView::update_progress() {
 			if (tx_mode != SCAN)
 			{
 				button_scan.set_text("ABORT");
+
+				std::string file_path = "DEBRUIJN.TXT";
+				delete_file(file_path); //Start with an empty logfile for debruijn
+
 				tx_view.set_transmitting(true);
 				start_tx(true);
 			}
@@ -348,5 +378,4 @@ void EncodersView::update_progress() {
 			}
 		};
 	}
-
 } /* namespace ui */
