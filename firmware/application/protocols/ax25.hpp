@@ -47,7 +47,7 @@ public:
 						const std::string& info);
 	
 private:
-	void NRZI_add_bit(const uint32_t bit);
+	void NRZI_add_bit(const bool bit);
 	void make_extended_field(char * const data, size_t length);
 	void add_byte(uint8_t byte, bool is_flag, bool is_data);
 	void add_data(uint8_t byte);

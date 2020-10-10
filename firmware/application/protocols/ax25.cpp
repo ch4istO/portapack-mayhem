@@ -35,7 +35,7 @@ void AX25Frame::make_extended_field(char * const data, size_t length) {
 	add_data((data[i] << 1) | 1);
 }
 
-void AX25Frame::NRZI_add_bit(const uint32_t bit) {
+void AX25Frame::NRZI_add_bit(const bool bit) {
 	if (!bit)
 		current_bit ^= 1;		// Zero: flip
 	
@@ -51,32 +51,34 @@ void AX25Frame::NRZI_add_bit(const uint32_t bit) {
 	}
 }
 
-void AX25Frame::add_byte(uint8_t byte, bool is_flag, bool is_data) {
-	uint32_t bit;
-	
+void AX25Frame::add_byte(uint8_t onebyte, bool is_flag, bool is_data) {
+	bool bit;
+
 	if (is_data)
-		crc_ccitt.process_byte(byte);
-	
+		crc_ccitt.process_byte(onebyte);
+
 	for (uint32_t i = 0; i < 8; i++) {
-		bit = (byte >> i) & 1;
-		
+		bit = (onebyte >> i) & 1;
+
+		NRZI_add_bit(bit);
+
 		if (bit)
+		{
 			ones_counter++;
+			if ((ones_counter == 5) && (!is_flag)) 
+			{
+				NRZI_add_bit(0);
+				ones_counter = 0;
+			}
+		}
 		else
 			ones_counter = 0;
-		
-		if ((ones_counter == 6) && (!is_flag)) {
-			NRZI_add_bit(0);
-			ones_counter = 0;
-		}
-		
-		NRZI_add_bit(bit);
 	}
 }
 
 void AX25Frame::flush() {
-	if (bit_counter)
-		*bb_data_ptr = current_byte << (7 - bit_counter);
+	if (bit_counter) 
+		*bb_data_ptr = current_byte << (8 - bit_counter);  //euquiq: This was 7 but there are 8 bits
 };
 
 void AX25Frame::add_flag() {
@@ -88,15 +90,13 @@ void AX25Frame::add_data(uint8_t byte) {
 };
 
 void AX25Frame::add_checksum() {
-	auto checksum = crc_ccitt.checksum();
-	add_byte(checksum, false, false);
+	uint16_t checksum = crc_ccitt.checksum();
+	add_byte(checksum & 255, false, false);
 	add_byte(checksum >> 8, false, false);
 }
 
 void AX25Frame::make_ui_frame(char * const address, const uint8_t control,
 	const uint8_t protocol, const std::string& info) {
-	
-	size_t i;
 	
 	bb_data_ptr = (uint16_t*)shared_memory.bb_data.data;
 	memset(bb_data_ptr, 0, sizeof(shared_memory.bb_data.data));
@@ -112,18 +112,20 @@ void AX25Frame::make_ui_frame(char * const address, const uint8_t control,
 	add_flag();
 	
 	make_extended_field(address, 14);
+
 	add_data(control);
 	add_data(protocol);
 	
-	for (i = 0; i < info.size(); i++)
+	for (uint8_t i = 0; i < info.size(); i++)
 		add_data(info[i]);
 	
 	add_checksum();
-	
+
 	add_flag();
 	add_flag();
-	
-	flush();
+
+	flush(); 
 }
+
 
 } /* namespace ax25 */
